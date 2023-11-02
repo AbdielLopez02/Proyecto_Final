@@ -8,7 +8,7 @@
 #include <sstream> 
 using namespace std;
 
-//diseño para titulos 
+//diseÃ±o para titulos 
 void titulo(string title){
 
 	int i; 
@@ -88,16 +88,13 @@ void Traducir();
 void Crear();
 void Actualizar();
 void Borrar();
-void LeerVocabulario(map<string, string> &vocabulario);
-void TraducirTexto(const map<string, string> &vocabulario);
+void TraducirFragmentoCpp();
 
 
 
 
 main(){
-map<string, string> vocabulario;
-    
-LeerVocabulario(vocabulario);
+
 
 	
 	
@@ -166,7 +163,7 @@ LeerVocabulario(vocabulario);
 			 
 			      
            case 6:  
-		   			TraducirTexto(vocabulario);
+		   			TraducirFragmentoCpp();
            break;
             
             
@@ -235,7 +232,7 @@ void Leer(){
     fread(&vocabulario, sizeof(Vocabulario), 1, archivo);
 
     cout << "*********************************************************************************************************" << endl;
-cout << setw(2) << "ID |" << setw(25) << left << "Palabra" << "|" << setw(25) << left << "Traducción" << "|" << setw(40) << left << "Funcionalidad" << endl;
+cout << setw(2) << "ID |" << setw(25) << left << "Palabra" << "|" << setw(25) << left << "TraducciÃ³n" << "|" << setw(40) << left << "Funcionalidad" << endl;
 cout << "_________________________________________________________________________________________________________" << endl;
 
 do {
@@ -497,7 +494,7 @@ void Borrar(){
 		cout<<endl;
 		ResetColor();
 	
-	cout << "¿Desea eliminar otra palabra (s/n)?: ";
+	cout << "Â¿Desea eliminar otra palabra (s/n)?: ";
         cin >> respuesta;
         
         system("cls");
@@ -520,78 +517,64 @@ void Borrar(){
 
 
 
-
-void LeerVocabulario(map<string, string> &vocabulario) {
-    FILE* archivo = fopen(nombre_archivo, "rb");
-    if (!archivo) {
-        cerr << "Error al abrir el archivo." << endl;
-        return;
-    }
-
-    Vocabulario palabraTraduccion;
-
-    while (fread(&palabraTraduccion, sizeof(Vocabulario), 1, archivo)) {
-        vocabulario[palabraTraduccion.palabra] = palabraTraduccion.traduccion;
-    }
-
-    fclose(archivo);
-}
-
-void TraducirTexto(const map<string, string> &vocabulario) {
-    FILE* archivo = fopen(nombre_archivo,"rb");
-    string linea;
-    char res;
+void TraducirFragmentoCpp() {
+    char respuesta;
 
     do {
-        cout << "Ingresa el fragmento de codigo a traducir, dejar un espacio entre la palabra que desea traducir y el resto del codigo (escribe 'fin' en una linea separada para finalizar):\n" << endl;
-
-        string texto = "";
+        string codigoCpp;
+        cin.ignore();
+        cout << "Ingrese el fragmento de cÃ³digo a traducir (finalice con una lÃ­nea vacÃ­a):\n";
+        string linea;
         while (true) {
             getline(cin, linea);
-
-            if (linea == "fin") {
+            if (linea.empty()) {
                 break;
             }
-
-            texto += linea + "\n";  // Agregará un salto de línea después de cada línea leída.
+            codigoCpp += linea + "\n";
         }
 
-        if (texto.empty()) {
-            continue;  // Si el fragmento está vacío, pedirá otro.
+        // Cargar el diccionario de traducciones desde el archivo vocabulario.dat
+        map<string, string> traducciones;
+        FILE* archivo = fopen(nombre_archivo, "rb");
+        if (!archivo) {
+            cerr << "Error al abrir el archivo de vocabulario." << endl;
+            return;
         }
+        Vocabulario vocabulario;
+        while (fread(&vocabulario, sizeof(Vocabulario), 1, archivo)) {
+            traducciones[string(vocabulario.palabra)] = string(vocabulario.traduccion);
+        }
+        fclose(archivo);
 
-        istringstream iss(texto);
-        
-        cout << "_______________________________________"<< endl;
-        cout << "La traduccion es:" << endl;
+        // Procesar el cÃ³digo C++ y realizar la traducciÃ³n
+        stringstream ss(codigoCpp);
+        string fragmento;
+        string traduccion = "";
 
-        while (getline(iss, linea)) {
-            istringstream issLinea(linea);
+        while (getline(ss, fragmento, '\n')) {
+            istringstream stream(fragmento);
             string palabra;
+            string lineaTraducida = "";
 
-            while (issLinea >> palabra) {
-                if (vocabulario.find(palabra) != vocabulario.end()) {
-                    SetGreenColor();
-                    cout << vocabulario.at(palabra) << " ";
-                    ResetColor();
+            while (stream >> palabra) {
+                if (traducciones.find(palabra) != traducciones.end()) {
+                   
+                    lineaTraducida += "\x1B[32m" + traducciones[palabra] + "\x1B[0m" + " ";
+        
                 } else {
-                    cout << palabra << " ";
+                    lineaTraducida += palabra + " ";
                 }
             }
-// Agregar un salto de línea después de cada línea traducida.
-            cout << endl;
+            traduccion += lineaTraducida + "\n";
         }
-        	cout << "_______________________________________"<< endl;
 
+        cout << "CÃ³digo traducido:\n";
+        
+        cout << traduccion;
 
-        cout << "Desea ingresar otro fragmento de codigo?? (s/n): ";
-        cin >> res;
-        cin.ignore();  
+        cout << "Â¿Desea realizar otra traducciÃ³n (s/n)?: ";
+        cin >> respuesta;
+
         system("cls");
-
-    } while (res == 's' || res == 'S');
+    } while (respuesta == 's' || respuesta == 'S');
 }
-
-
-
-
